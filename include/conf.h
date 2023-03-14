@@ -5,6 +5,6 @@
 
 extern struct _conf conf;
 
-int load_conf(char *fn);
+int load_conf(char *fn, int silent);
 
 #endif /* CONF_H */

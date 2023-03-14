@@ -329,7 +329,7 @@ int main(int argc, char const *argv[])
   //setvbuf(stdout,NULL,_IONBF,0);
   printf("fixarr v1.00 stared!\n");
 
-  load_conf("fixarr.json");
+  load_conf("fixarr.json",0);
 
   while (1) {
     for (i=0; i<2; i++) {
