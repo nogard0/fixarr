@@ -15,7 +15,7 @@ CFLAGS	:= -Wall -Wextra -g -D_XOPEN_SOURCE -D_DEFAULT_SOURCE
 LFLAGS =
 
 # define output directory
-OUTPUT	:= output
+OUTPUT	:= .
 
 # define source directory
 SRC		:= src

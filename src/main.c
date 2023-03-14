@@ -4,18 +4,21 @@
 #include <ulfius.h>
 #include <time.h>
 
-struct _host {
-  int      enabled;
-  char   * URL;
-  char   * APIKEY;
-  char   * name;
-  char   * id_keyname;
-  char   * search_command_name;
-  char   * search_key_name;
-};
+#include <types.h>
+#include <conf.h>
 
-struct _host hosts[]={{1,"http://192.168.40.3:7878","92578a090c8f437bb7a9eba399c8034d","RADARR","movieId","MoviesSearch","movieIds"},
-                      {1,"http://192.168.40.3:8989","beca31b2bc2f4430abf6bb3d05bce0a3","SONARR","episodeId","EpisodeSearch","episodeIds"}};
+// struct _host {
+//   int      enabled;
+//   char   * URL;
+//   char   * APIKEY;
+//   char   * name;
+//   char   * id_keyname;
+//   char   * search_command_name;
+//   char   * search_key_name;
+// };
+
+// struct _host hosts[]={{1,"http://192.168.40.3:7878","92578a090c8f437bb7a9eba399c8034d","RADARR","movieId","MoviesSearch","movieIds"},
+//                       {1,"http://192.168.40.3:8989","beca31b2bc2f4430abf6bb3d05bce0a3","SONARR","episodeId","EpisodeSearch","episodeIds"}};
 
 /**
  * decode a u_map into a string
@@ -76,7 +79,7 @@ time_t convert_iso8601(const char *time_string)
   //return t + localtime( &t )->__tm_gmtoff;
 }
 
-void startSearch(struct _host *host, int mID)
+void startSearch(struct _stalled *stalled, int mID)
 {
   struct _u_response response;
   int res;
@@ -91,19 +94,19 @@ void startSearch(struct _host *host, int mID)
   }
 
   json_body = json_object();
-  json_object_set_new(json_body, "name", json_string(host->search_command_name));
+  json_object_set_new(json_body, "name", json_string(stalled->host->arr->search_command_name));
   j = json_array();
   json_array_append_new(j,json_integer(mID));
-  json_object_set_new(json_body, host->search_key_name, j);
+  json_object_set_new(json_body, stalled->host->arr->search_key_name, j);
 
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
                                 U_OPT_HTTP_VERB, "POST",
-                                U_OPT_HTTP_URL, host->URL,
+                                U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/command",
                                 U_OPT_TIMEOUT, 20,
                                 U_OPT_JSON_BODY, json_body,
-                                U_OPT_URL_PARAMETER, "apikey", host->APIKEY,
+                                U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
                                 U_OPT_NONE); // Required to close the parameters list
 
   ulfius_init_response(&response);
@@ -133,7 +136,7 @@ out:
   ulfius_clean_request(&req);
 }
 
-int delete(struct _host *host, int mID)
+int delete(struct _stalled *stalled, int mID)
 {
   struct _u_response response;
   int res;
@@ -152,11 +155,11 @@ int delete(struct _host *host, int mID)
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
                                 U_OPT_HTTP_VERB, "DELETE",
-                                U_OPT_HTTP_URL, host->URL,
+                                U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/queue/",
                                 U_OPT_HTTP_URL_APPEND, smID,
                                 U_OPT_TIMEOUT, 20,
-                                U_OPT_URL_PARAMETER, "apikey", host->APIKEY,
+                                U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
                                 U_OPT_URL_PARAMETER, "removeFromClient", "true",
                                 U_OPT_URL_PARAMETER, "blocklist", "true",
                                 U_OPT_NONE); // Required to close the parameters list
@@ -189,7 +192,7 @@ out:
   return res;
 }
 
-int get_mins_added(struct _host *host, int mID)
+int get_mins_added(struct _stalled *stalled, int mID)
 {
   struct _u_response response;
   int res;
@@ -209,11 +212,11 @@ int get_mins_added(struct _host *host, int mID)
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
                                 U_OPT_HTTP_VERB, "GET",
-                                U_OPT_HTTP_URL, host->URL,
+                                U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/history",
                                 U_OPT_TIMEOUT, 20,
-                                U_OPT_URL_PARAMETER, "apikey", host->APIKEY,
-                                U_OPT_URL_PARAMETER, host->id_keyname, smID,
+                                U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
+                                U_OPT_URL_PARAMETER, stalled->host->arr->id_keyname, smID,
                                 U_OPT_NONE); // Required to close the parameters list
 
   ulfius_init_response(&response);
@@ -253,7 +256,7 @@ out:
   return dif;
 }
 
-int find_stalled(struct _host *host)
+int find_stalled(struct _stalled *stalled)
 {
   struct _u_response response;
   int res;
@@ -266,10 +269,10 @@ int find_stalled(struct _host *host)
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
                                 U_OPT_HTTP_VERB, "GET",
-                                U_OPT_HTTP_URL, host->URL,
+                                U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/queue",
                                 U_OPT_TIMEOUT, 20,
-                                U_OPT_URL_PARAMETER, "apikey", host->APIKEY,
+                                U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
                                 U_OPT_NONE);
 
   ulfius_init_response(&response);
@@ -294,16 +297,16 @@ int find_stalled(struct _host *host)
     so=json_real_value(json_object_get(j,"size"));
     sl=json_real_value(json_object_get(j,"sizeleft"));
     //printf("TEST: %lld,%lld\n",so,sl);
-    id=json_integer_value(json_object_get(j,host->id_keyname));
+    id=json_integer_value(json_object_get(j,stalled->host->arr->id_keyname));
     if ((so!=sl) || (so==0)) {
       continue;
     }
-    dif=get_mins_added(host, id);
+    dif=get_mins_added(stalled, id);
     if (dif>15) {
-      printf("%s stalled: (%d min): %s - %s ... ", host->name, dif,json_string_value(json_object_get(j,"indexer")),
+      printf("%s stalled: (%d min): %s - %s ... ", stalled->host->name, dif,json_string_value(json_object_get(j,"indexer")),
           json_string_value(json_object_get(j,"title")));
-      if (delete(host, json_integer_value(json_object_get(j,"id"))) == 0) {
-        startSearch(host, id);
+      if (delete(stalled, json_integer_value(json_object_get(j,"id"))) == 0) {
+        startSearch(stalled, id);
       }
     }
   }
@@ -326,9 +329,11 @@ int main(int argc, char const *argv[])
   //setvbuf(stdout,NULL,_IONBF,0);
   printf("fixarr v1.00 stared!\n");
 
+  load_conf("fixarr.json");
+
   while (1) {
     for (i=0; i<2; i++) {
-      find_stalled(&hosts[i]);
+      find_stalled(&conf.stalled[i]);
     }
     sleep(60*5);
   }  
