@@ -1,8 +1,21 @@
 {
   "cSpell.words": [
+    "fixarr",
     "jarr",
     "RADARR",
     "sizeleft",
     "SONARR"
-  ]
+  ],
+  "makefile.configurations": [
+      {
+          "name": "Default",
+          "problemMatchers": [
+              "$gcc"
+          ]
+      }
+  ],
+  "C_Cpp.intelliSenseEngineFallback": "enabled",
+  "files.exclude": {
+      "**/*.d": true
+  },
 }
