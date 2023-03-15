@@ -19,4 +19,13 @@
   "files.exclude": {
       "**/*.d": true
   },
+  "files.associations": {
+    "*.h": "c",
+    "map": "c",
+    "condition_variable": "c",
+    "ctime": "c",
+    "mutex": "c",
+    "chrono": "c",
+    "thread": "c"
+  },
 }
