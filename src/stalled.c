@@ -6,6 +6,10 @@
 
 #define log_err(x,p...) fprintf(stderr,"ERROR (%s): " x "\n", stalled->host->name, ## p);
 
+char _cc[1024];
+
+#define cc(s,p...) ({ snprintf(_cc,1024,s,## p); _cc; })
+
 void startSearch(struct _stalled *stalled, int mID)
 {
   struct _u_response response;
@@ -29,8 +33,12 @@ void startSearch(struct _stalled *stalled, int mID)
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
                                 U_OPT_HTTP_VERB, "POST",
+#if ULFIUS_CHECK_VERSION(2,7,2)
                                 U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/command",
+#else
+                                U_OPT_HTTP_URL, cc("%s%s",stalled->host->URL,"/api/v3/command"),
+#endif
                                 U_OPT_TIMEOUT, 20,
                                 U_OPT_JSON_BODY, json_body,
                                 U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
@@ -68,7 +76,6 @@ int delete(struct _stalled *stalled, int mID)
   struct _u_response response;
   int res;
   struct _u_request req;
-  char smID[20];
   json_t * json_res;
   json_error_t err;
 
@@ -77,14 +84,21 @@ int delete(struct _stalled *stalled, int mID)
     return -1;
   }
 
+#if ULFIUS_CHECK_VERSION(2,7,2)
+  char smID[20];
   sprintf(smID,"%d",mID);
+#endif
 
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
                                 U_OPT_HTTP_VERB, "DELETE",
+#if ULFIUS_CHECK_VERSION(2,7,2)
                                 U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/queue/",
                                 U_OPT_HTTP_URL_APPEND, smID,
+#else
+                                U_OPT_HTTP_URL, cc("%s%s%d",stalled->host->URL,"/api/v3/queue/",mID),
+#endif
                                 U_OPT_TIMEOUT, 20,
                                 U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
                                 U_OPT_URL_PARAMETER, "removeFromClient", "true",
@@ -139,8 +153,12 @@ int get_secs_added(struct _stalled *stalled, int mID)
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
                                 U_OPT_HTTP_VERB, "GET",
+#if ULFIUS_CHECK_VERSION(2,7,2)
                                 U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/history",
+#else
+                                U_OPT_HTTP_URL, cc("%s%s",stalled->host->URL,"/api/v3/history"),
+#endif
                                 U_OPT_TIMEOUT, 20,
                                 U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
                                 U_OPT_URL_PARAMETER, stalled->host->arr->id_keyname, smID,
@@ -201,8 +219,12 @@ time_t find_stalled(struct _stalled *stalled)
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
                                 U_OPT_HTTP_VERB, "GET",
+#if ULFIUS_CHECK_VERSION(2,7,2)
                                 U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/queue",
+#else
+                                U_OPT_HTTP_URL, cc("%s%s",stalled->host->URL,"/api/v3/queue"),
+#endif
                                 U_OPT_TIMEOUT, 20,
                                 U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
                                 U_OPT_NONE);
