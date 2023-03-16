@@ -1,0 +1,12 @@
+[Unit]
+Description=Keeping my sources fresher than Arch Linux
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/fixarr
+Type=exec
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
+

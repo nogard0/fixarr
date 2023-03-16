@@ -9,6 +9,11 @@ CC = gcc
 # define any compile-time flags
 CFLAGS	:= -Wall -Wextra -g -std=gnu99 -D_XOPEN_SOURCE -D_DEFAULT_SOURCE
 
+ifdef DEBUG
+CFLAGS += -DDEBUG
+endif
+
+
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
@@ -92,3 +97,23 @@ clean:
 run: all
 	./$(OUTPUTMAIN)
 	@echo Executing 'run: all' complete!
+
+install: all
+	@if [ "`whoami`" = "root" ] ; \
+	then \
+		echo "Install in /usr/local/bin"; \
+		install -m 755 $(OUTPUTMAIN) /usr/local/bin/; \
+		echo "Config file: /etc/fixarr.json"; \
+		if [ ! -f /etc/fixarr.json ]; then cp fixarr.json /etc/; chmod 600 /etc/fixarr.json; fi; \
+	else \
+		echo "Install in ~/.local/bin"; \
+		install -m 755 $(OUTPUTMAIN) ~/.local/bin; \
+		echo "Config file: ~/fixarr.json"; \
+		if [ ! -f ~/fixarr.json ]; then cp fixarr.json ~; chmod 600 ~/fixarr.json; fi; \
+	fi
+
+install_service:
+	mkdir -p /etc/systemd/system
+	cp fixarr.service /etc/systemd/system/
+	systemctl daemon-reload
+	systemctl enable fixarr.service
