@@ -7,7 +7,12 @@
 CC = gcc
 
 # define any compile-time flags
-CFLAGS	:= -Wall -Wextra -g -D_XOPEN_SOURCE -D_DEFAULT_SOURCE
+CFLAGS	:= -Wall -Wextra -g -std=gnu99 -D_XOPEN_SOURCE -D_DEFAULT_SOURCE
+
+ifdef DEBUG
+CFLAGS += -DDEBUG
+endif
+
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
@@ -15,7 +20,7 @@ CFLAGS	:= -Wall -Wextra -g -D_XOPEN_SOURCE -D_DEFAULT_SOURCE
 LFLAGS =
 
 # define output directory
-OUTPUT	:= output
+OUTPUT	:= .
 
 # define source directory
 SRC		:= src
@@ -23,14 +28,10 @@ SRC		:= src
 # define include directory
 INCLUDE	:= include
 
-# define lib directory
-LIB		:= lib
-
 ifeq ($(OS),Windows_NT)
 MAIN	:= main.exe
 SOURCEDIRS	:= $(SRC)
 INCLUDEDIRS	:= $(INCLUDE)
-LIBDIRS		:= $(LIB)
 FIXPATH = $(subst /,\,$1)
 RM			:= del /q /f
 MD	:= mkdir
@@ -38,7 +39,6 @@ else
 MAIN	:= fixarr
 SOURCEDIRS	:= $(shell find $(SRC) -type d)
 INCLUDEDIRS	:= $(shell find $(INCLUDE) -type d)
-LIBDIRS		:= $(shell find $(LIB) -type d)
 FIXPATH = $1
 RM = rm -f
 MD	:= mkdir -p
@@ -48,8 +48,7 @@ endif
 INCLUDES	:= $(patsubst %,-I%, $(INCLUDEDIRS:%/=%))
 
 # define the C libs
-LIBS		:= $(patsubst %,-L%, $(LIBDIRS:%/=%))
-LDLIBS = -lc -lulfius -lorcania -lmicrohttpd -ljansson -lz
+LDLIBS = -lulfius -ljansson
 
 # define the C source files
 SOURCES		:= $(wildcard $(patsubst %,%/*.c, $(SOURCEDIRS)))
@@ -75,7 +74,7 @@ $(OUTPUT):
 	$(MD) $(OUTPUT)
 
 $(MAIN): $(OBJECTS) 
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS) $(LDLIBS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LDLIBS)
 
 # include all .d files
 -include $(DEPS)
@@ -98,3 +97,23 @@ clean:
 run: all
 	./$(OUTPUTMAIN)
 	@echo Executing 'run: all' complete!
+
+install:
+	@if [ "`whoami`" = "root" ] ; \
+	then \
+		echo "Install in /usr/local/bin"; \
+		install -m 755 $(OUTPUTMAIN) /usr/local/bin/; \
+		echo "Config file: /etc/fixarr.json"; \
+		if [ ! -f /etc/fixarr.json ]; then cp fixarr.json /etc/; chmod 600 /etc/fixarr.json; fi; \
+	else \
+		echo "Install in ~/.local/bin"; \
+		install -m 755 $(OUTPUTMAIN) ~/.local/bin; \
+		echo "Config file: ~/fixarr.json"; \
+		if [ ! -f ~/fixarr.json ]; then cp fixarr.json ~; chmod 600 ~/fixarr.json; fi; \
+	fi
+
+install_service:
+	mkdir -p /etc/systemd/system
+	cp fixarr.service /etc/systemd/system/
+	systemctl daemon-reload
+	systemctl enable fixarr.service

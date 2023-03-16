@@ -1,8 +1,34 @@
 {
   "cSpell.words": [
+    "arrs",
+    "fixarr",
     "jarr",
     "RADARR",
     "sizeleft",
     "SONARR"
-  ]
+  ],
+  "makefile.configurations": [
+      {
+          "name": "Default",
+          "problemMatchers": [
+              "$gcc"
+          ]
+      }
+  ],
+  "C_Cpp.intelliSenseEngineFallback": "enabled",
+  "files.exclude": {
+      "**/*.d": true
+  },
+  "files.associations": {
+    "*.h": "c",
+    "map": "c",
+    "condition_variable": "c",
+    "ctime": "c",
+    "mutex": "c",
+    "chrono": "c",
+    "thread": "c",
+    "typeinfo": "c",
+    "cstdio": "c",
+    "random": "c"
+  },
 }
