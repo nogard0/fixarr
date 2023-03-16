@@ -264,7 +264,7 @@ time_t find_stalled(struct _stalled *stalled)
       continue;
     }
     
-    printf("%s stalled: (%s)[%lf]: %s - %s ... ", stalled->host->name, secs_to_hrtime(dif),pro,json_string_value(json_object_get(j,"indexer")),
+    printf("%s stalled: (%s)[%.2lf%%]: %s - %s ... ", stalled->host->name, secs_to_hrtime(dif),pro,json_string_value(json_object_get(j,"indexer")),
           json_string_value(json_object_get(j,"title")));
     if (delete(stalled, json_integer_value(json_object_get(j,"id"))) == 0) {
       startSearch(stalled, id);
