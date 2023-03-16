@@ -26,6 +26,9 @@
     "ctime": "c",
     "mutex": "c",
     "chrono": "c",
-    "thread": "c"
+    "thread": "c",
+    "typeinfo": "c",
+    "cstdio": "c",
+    "random": "c"
   },
 }
