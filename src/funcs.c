@@ -5,6 +5,7 @@
 
 char hr_secs[20];
 
+#ifdef DEBUG
 char * print_map(const struct _u_map * map) {
   char * line, * to_return = NULL;
   const char **keys, * value;
@@ -33,9 +34,14 @@ char * print_map(const struct _u_map * map) {
   } else {
     return NULL;
   }
+
 }
+#endif
 
 void print_response(struct _u_response * response) {
+#ifndef DEBUG
+  (void)(response);
+#else
   if (response != NULL) {
     char * headers = print_map(response->map_header);
     char response_body[response->binary_body_length + 1];
@@ -46,6 +52,7 @@ void print_response(struct _u_response * response) {
            response->protocol, headers, response_body);
     free(headers);
   }
+#endif
 }
 
 time_t convert_iso8601(const char *time_string)

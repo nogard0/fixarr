@@ -1,0 +1,25 @@
+{
+    "hosts": [
+        {
+            "type": "radarr",
+            "name": "RADARR",
+            "url": "http://192.168.0.1:7878",
+            "apikey": null
+        },
+        {
+            "type": "sonarr",
+            "name": "SONARR",
+            "url": "http://192.168.0.1:8989",
+            "apikey": null
+        }
+    ],
+    "stalled": [
+        {
+            "hostIDs": [ 0, 1 ],
+            "enabled": true,
+            "minRefreshTime": 5,
+            "zeroStartTimeout": 15,
+            "stalledTimeout": 7200
+        }
+    ]
+}

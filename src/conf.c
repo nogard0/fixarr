@@ -24,12 +24,15 @@ int load_conf(char *fn, int silent)
   struct _host *hosts=NULL;
   struct _stalled *stalled=NULL;
 
+  conf.hosts=NULL;
+  conf.stalled=NULL;
+
   FILE *f = fopen(fn, "rb");
 
   if (!f) {
     if (silent)
       return -1000;
-    printf("ERROR: Invalid configuration file specified: %s!\n",fn);
+    fprintf(stderr,"ERROR: Invalid configuration file specified: %s!\n",fn);
     return errno;
   }
 
@@ -45,11 +48,11 @@ int load_conf(char *fn, int silent)
 
   json = json_loads(buf, 0, &err);
   if (!json) {
-    printf("Error in configuration parsing: %s\n", err.text);
+    fprintf(stderr,"Error in configuration parsing: %s\n", err.text);
     return -1;
   }
 
-  #define go_out(s,p...) { printf(s "!\n",## p); res=-2; goto out; }
+  #define go_out(s,p...) { fprintf(stderr,"%s: "s "!\n",fn,## p); res=-2; goto out; }
 
   jarr=json_object_get(json,"hosts");
   if (json_array_size(jarr)==0) 
@@ -103,16 +106,20 @@ int load_conf(char *fn, int silent)
       if ((ho<0) || (ho>=hc))
         go_out("Invalid hostIDs");
       stalled[n].host = &hosts[ho];
-      stalled[n].enabled = !json_is_false(json_object_get(j2,"enabled"));
-      stalled[n].minRefreshTime = json_integer_value_def(j2,"minRefreshTime",5);
-      stalled[n].zeroStartTimeout = json_integer_value_def(j2,"zeroStartTimeout",15);
-      stalled[n].stalledTimeout = json_integer_value_def(j2,"stalledTimeout",7200);
+      stalled[n].enabled = !json_is_false(json_object_get(j,"enabled"));
+      stalled[n].minRefreshTime = json_integer_value_def(j,"minRefreshTime",5);
+      if (stalled[n].minRefreshTime<1)
+        stalled[n].minRefreshTime=1;
+      stalled[n].zeroStartTimeout = json_integer_value_def(j,"zeroStartTimeout",15);
+      stalled[n].stalledTimeout = json_integer_value_def(j,"stalledTimeout",7200);
       n++;
     }
   }
 
   conf.hosts=hosts;
   conf.stalled=stalled;
+
+  printf("Configuration loaded successfully: %s\n", fn);
 
   json_decref(json);
   return 0;
