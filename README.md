@@ -20,6 +20,9 @@ $ make install
 
 $ #install in /usr/local/bin
 $ sudo make install
+
+$ #install systemd service
+$ sudo make install_service
 ```
 
 ## Configuration
@@ -30,6 +33,7 @@ Search for configuration file is in this sequence:
 - fixarr.json (current dir)
 
 **hosts** array contains all hosts that can be used
+
 Example **hosts** object:
 ```javascript
 {
@@ -40,6 +44,7 @@ Example **hosts** object:
 }
 ```
 **stalled** array contains all hosts that must be checked for stalled downloads
+
 Example **stalled** object:
 ```javascript
 {

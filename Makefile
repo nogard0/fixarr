@@ -98,7 +98,7 @@ run: all
 	./$(OUTPUTMAIN)
 	@echo Executing 'run: all' complete!
 
-install: all
+install:
 	@if [ "`whoami`" = "root" ] ; \
 	then \
 		echo "Install in /usr/local/bin"; \
