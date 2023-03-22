@@ -8,16 +8,15 @@
         },
         {
             "type": "sonarr",
-            "name": "SONARR",
+            "name": "SONson",
             "url": "http://192.168.0.1:8989",
             "apikey": null
         }
     ],
     "stalled": [
         {
-            "hostIDs": [ 0, 1 ],
+            "hosts": [ "RADARR", "SONson" ],
             "enabled": true,
-            "minRefreshTime": 5,
             "zeroStartTimeout": 15,
             "stalledTimeout": 7200
         }

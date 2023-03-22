@@ -8,8 +8,8 @@
 
 struct _conf conf;
 
-const struct _arr arrs[]={{"RADARR","movieId","MoviesSearch","movieIds"},
-                          {"SONARR","episodeId","EpisodeSearch","episodeIds"}};
+const struct _arr arrs[]={{"RADARR","movieId","MoviesSearch","movieIds","/movie"},
+                          {"SONARR","episodeId","EpisodeSearch","episodeIds",""}};
 
 #define json_integer_value_def(j,n,def) ({ int _r; json_t *_j=json_object_get(j,n); if (json_is_integer(_j)) _r=json_integer_value(_j); else _r=def; _r; })
 
@@ -26,6 +26,7 @@ int load_conf(char *fn, int silent)
 
   conf.hosts=NULL;
   conf.stalled=NULL;
+  conf.dry_run=0;
 
   FILE *f = fopen(fn, "rb");
 
@@ -89,31 +90,46 @@ int load_conf(char *fn, int silent)
   jarr=json_object_get(json,"stalled");
   l = 1;
   json_array_foreach(jarr,i,j) {
-    l += json_array_size(json_object_get(j,"hostIDs"));
+    l += json_array_size(json_object_get(j,"hosts"));
   }
   stalled = malloc(sizeof(struct _stalled)*l);
   memset(stalled,0,sizeof(struct _stalled)*l);
 
   n = 0;
   json_array_foreach(jarr,i,j) {
-    jarr2 = json_object_get(j,"hostIDs");
+    jarr2 = json_object_get(j,"hosts");
     json_array_foreach(jarr2,l,j2) {
       int ho;
-      if (json_is_integer(j2))
-        ho=json_integer_value(j2);
-      else
-        ho=-1;
-      if ((ho<0) || (ho>=hc))
-        go_out("Invalid hostIDs");
-      stalled[n].host = &hosts[ho];
+      const char *host;
+      host=json_string_value(j2);
+      if (!host)
+        go_out("Invalid host specified");
+      for (ho=0; ho<hc; ho++) {
+        if (!strcmp(hosts[ho].name,host)) {
+          stalled[n].host = &hosts[ho];
+          break;
+        }
+      }
+      if (!stalled[n].host)
+        go_out("Invalid host specified - %s",host);
       stalled[n].enabled = !json_is_false(json_object_get(j,"enabled"));
-      stalled[n].minRefreshTime = json_integer_value_def(j,"minRefreshTime",5);
-      if (stalled[n].minRefreshTime<1)
-        stalled[n].minRefreshTime=1;
-      stalled[n].zeroStartTimeout = json_integer_value_def(j,"zeroStartTimeout",15);
-      stalled[n].stalledTimeout = json_integer_value_def(j,"stalledTimeout",7200);
+      stalled[n].zeroStartTimeout = json_integer_value_def(j,"zeroStartTimeout",15)*60;
+      stalled[n].stalledTimeout = json_integer_value_def(j,"stalledTimeout",7200)*60;
+      if (!stalled[n].zeroStartTimeout && !stalled[n].stalledTimeout)
+        stalled[n].enabled = 0;
       n++;
     }
+  }
+
+  for (i=0, l=0; stalled[i].host; i++) {
+    if (stalled[i].enabled) {
+      l++;
+      break;
+    }
+  }
+
+  if (!l) {
+    go_out("No valid enabled stalled watchers configured");
   }
 
   conf.hosts=hosts;

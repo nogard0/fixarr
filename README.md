@@ -32,6 +32,14 @@ Search for configuration file is in this sequence:
 - /etc/fixarr.json
 - fixarr.json (current dir)
 
+OR
+
+specified conf file with -c parameter, for example:
+
+```bash
+$ fixarr -c /tmp/f.json
+```
+
 **hosts** array contains all hosts that can be used
 
 Example **hosts** object:

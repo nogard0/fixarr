@@ -1,5 +1,6 @@
 #include <jansson.h>
 #include <ulfius.h>
+#include <string.h>
 #include "types.h"
 #include "conf.h"
 #include "funcs.h"
@@ -8,7 +9,9 @@
 
 char _cc[1024];
 
+#if ! ULFIUS_CHECK_VERSION(2,7,2)
 #define cc(s,p...) ({ snprintf(_cc,1024,s,## p); _cc; })
+#endif
 
 void startSearch(struct _stalled *stalled, int mID)
 {
@@ -42,7 +45,7 @@ void startSearch(struct _stalled *stalled, int mID)
                                 U_OPT_TIMEOUT, 20,
                                 U_OPT_JSON_BODY, json_body,
                                 U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
-                                U_OPT_NONE); // Required to close the parameters list
+                                U_OPT_NONE);
 
   ulfius_init_response(&response);
   res = ulfius_send_http_request(&req, &response);
@@ -103,7 +106,7 @@ int delete(struct _stalled *stalled, int mID)
                                 U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
                                 U_OPT_URL_PARAMETER, "removeFromClient", "true",
                                 U_OPT_URL_PARAMETER, "blocklist", "true",
-                                U_OPT_NONE); // Required to close the parameters list
+                                U_OPT_NONE);
 
   ulfius_init_response(&response);
   res = ulfius_send_http_request(&req, &response);
@@ -133,19 +136,20 @@ out:
   return res;
 }
 
-int get_secs_added(struct _stalled *stalled, int mID)
+int get_time_and_title(struct _stalled *stalled, int mID, const char *downloadId, time_t *dif, char **sourceTitle)
 {
   struct _u_response response;
   int res;
   struct _u_request req;
-  json_t * json_res, *j;
+  json_t * json_res, *j, *jr;
   json_error_t err;
   time_t now;
-  time_t added, dif=0;
+  time_t added;
   char smID[20];
+  int i;
 
-  if (!mID) {
-    return 0;
+  if (!mID || !downloadId) {
+    return -4;
   }
 
   sprintf(smID,"%d",mID);
@@ -156,65 +160,87 @@ int get_secs_added(struct _stalled *stalled, int mID)
 #if ULFIUS_CHECK_VERSION(2,7,2)
                                 U_OPT_HTTP_URL, stalled->host->URL,
                                 U_OPT_HTTP_URL_APPEND, "/api/v3/history",
+                                U_OPT_HTTP_URL_APPEND, stalled->host->arr->history_endpoint,
 #else
-                                U_OPT_HTTP_URL, cc("%s%s",stalled->host->URL,"/api/v3/history"),
+                                U_OPT_HTTP_URL, cc("%s%s%s",stalled->host->URL,"/api/v3/history",stalled->host->arr->history_endpoint),
 #endif
                                 U_OPT_TIMEOUT, 20,
                                 U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
                                 U_OPT_URL_PARAMETER, stalled->host->arr->id_keyname, smID,
-                                U_OPT_NONE); // Required to close the parameters list
+                                U_OPT_NONE);
 
   ulfius_init_response(&response);
   res = ulfius_send_http_request(&req, &response);
   if (res != U_OK) {
     log_err("Error in http request: %d", res);
     print_response(&response);
-    dif=-3;
+    res=-3;
     goto out;
   }
 
   json_res = ulfius_get_json_body_response(&response,&err);
   if (!json_res) {
     log_err("Error in JSON parsing: %s", err.text);
-    dif=-1;
+    res=-1;
     goto out;
   }
 
-  j=json_object_get(json_res,"records");
+  if (strlen(stalled->host->arr->history_endpoint) == 0) {
+    jr=json_object_get(json_res,"records");
 
-  if (!j || !json_array_size(j)) {
-    log_err("Error in JSON parsing: no records");
-    print_response(&response);
-    dif=-2;
-    json_decref(json_res);
-    goto out;
+    if (!jr || !json_array_size(jr)) {
+      log_err("Error in JSON parsing: no records");
+      print_response(&response);
+      res=-2;
+      goto out2;
+    }
+  } else {
+    jr=json_res;
   }
 
-  j=json_array_get(j, 0);
-
-  time (&now);
-  added=convert_iso8601(json_string_value(json_object_get(j,"date")));
-  dif=(now-added);
-
+  json_array_foreach(jr,i,j) {
+    const char *dId=json_string_value(json_object_get(j,"downloadId"));
+    if (dId && !strcmp(dId,downloadId)) {
+      time (&now);
+      added=convert_iso8601(json_string_value(json_object_get(j,"date")));
+      *dif=(now-added);
+      dId=json_string_value(json_object_get(j,"sourceTitle"));
+      if (dId)
+        *sourceTitle=strdup(dId);
+      else
+        *sourceTitle=strdup("N/A");
+      goto out2;
+    }
+  }
+  res=-5;
+out2:
   json_decref(json_res);
 out:
   ulfius_clean_response(&response);
   ulfius_clean_request(&req);
-  return dif;
+  return res;
 }
 
-time_t find_stalled(struct _stalled *stalled)
+void find_stalled(struct _stalled *stalled)
 {
   struct _u_response response;
   int res;
-  time_t tim;
+  time_t now;
   json_error_t err;
   struct _u_request req;
   json_t * json_res;
   json_t *jarr, *j;
   int i;
+  const char *downloadId;
 
-  tim = stalled->minRefreshTime*60;
+  time (&now);
+  if (stalled->zeroStartTimeout && stalled->stalledTimeout) {
+    stalled->next_check=now+MIN(stalled->zeroStartTimeout,stalled->stalledTimeout);
+  } else if (stalled->zeroStartTimeout) {
+    stalled->next_check=now+stalled->zeroStartTimeout;
+  } else if (stalled->stalledTimeout) {
+    stalled->next_check=now+stalled->stalledTimeout;
+  }
   
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
@@ -227,6 +253,7 @@ time_t find_stalled(struct _stalled *stalled)
 #endif
                                 U_OPT_TIMEOUT, 20,
                                 U_OPT_URL_PARAMETER, "apikey", stalled->host->APIKEY,
+                                U_OPT_URL_PARAMETER, "pageSize", "1000",
                                 U_OPT_NONE);
 
   ulfius_init_response(&response);
@@ -246,29 +273,49 @@ time_t find_stalled(struct _stalled *stalled)
   json_array_foreach(jarr,i,j) {
     double so,sl,pro;
     time_t dif;
-    int id;
-    json_t *jr;
-    jr = json_object_get(j,"size");
-    so=json_is_real(jr)?json_real_value(jr):json_integer_value(jr);
-    jr = json_object_get(j,"sizeleft");
-    sl=json_is_real(jr)?json_real_value(jr):json_integer_value(jr);
+    int id, res;
+    char *sourceTitle;
+    so=json_number_value(json_object_get(j,"size"));
+    sl=json_number_value(json_object_get(j,"sizeleft"));
     pro=(so-sl)/so*100;
     id=json_integer_value(json_object_get(j,stalled->host->arr->id_keyname));
-    dif=get_secs_added(stalled, id);
-    if (dif<0)
+    downloadId=json_string_value(json_object_get(j,"downloadId"));
+    res=get_time_and_title(stalled, id, downloadId, &dif, &sourceTitle);
+    if (res<0) {
       continue;
-    if (! ((stalled->zeroStartTimeout && (so==sl) && (so!=0) && (dif>stalled->zeroStartTimeout*60))
-        || (stalled->stalledTimeout && (dif>stalled->stalledTimeout*60))) ) {
-      if (stalled->zeroStartTimeout)
-        tim=MIN(tim+1,stalled->zeroStartTimeout*60-dif);
+    }
+    if (! ((stalled->zeroStartTimeout && (so==sl) && (so!=0) && (dif>stalled->zeroStartTimeout))
+        || (stalled->stalledTimeout && (dif>stalled->stalledTimeout))) ) {
+      
+      time (&now);
+      if (stalled->zeroStartTimeout && (so==sl) && (so!=0)) {
+        stalled->next_check=MIN(stalled->next_check,now+stalled->zeroStartTimeout-dif);
+      }
+      if (stalled->stalledTimeout) {
+        stalled->next_check=MIN(stalled->next_check,now+stalled->stalledTimeout-dif);
+      }
+      if (sourceTitle)
+        free(sourceTitle);
       continue;
     }
     
-    printf("%s stalled: (%s)[%.2lf%%]: %s - %s ... ", stalled->host->name, secs_to_hrtime(dif),pro,json_string_value(json_object_get(j,"indexer")),
-          json_string_value(json_object_get(j,"title")));
-    if (delete(stalled, json_integer_value(json_object_get(j,"id"))) == 0) {
-      startSearch(stalled, id);
+    printf("%s stalled: (%s)[%.2lf%%]: %s - %s - %s ... ", 
+          stalled->host->name, 
+          secs_to_hrtime(dif), 
+          pro, 
+          json_string_value(json_object_get(j,"indexer")),
+          sourceTitle,
+          json_string_value(json_object_get(j,"title")) );
+    
+    if (conf.dry_run) {
+      printf("DRY-RUN - no action taken\n");
+    } else {
+      if (delete(stalled, json_integer_value(json_object_get(j,"id"))) == 0) {
+        startSearch(stalled, id);
+      }
     }
+    if (sourceTitle)
+      free(sourceTitle);
   }
 
   json_decref(json_res);
@@ -276,18 +323,28 @@ time_t find_stalled(struct _stalled *stalled)
 out:
   ulfius_clean_response(&response);
   ulfius_clean_request(&req);
-  return tim;
 }
 
 time_t process_stalled() 
 {
   int i;
-  time_t tim;
-  tim=60*60*24;
+  time_t tim,res=0;
+
+  time(&tim);
   for (i=0; conf.stalled[i].host; i++) {
-    if (conf.stalled[i].enabled)
-      tim=MIN(tim,find_stalled(&conf.stalled[i]));
+    if (conf.stalled[i].enabled) {
+      if  (conf.stalled[i].next_check<=tim) {
+        find_stalled(&conf.stalled[i]);
+      }
+      if (res) {
+        res=MIN(res,conf.stalled[i].next_check);
+      } else {
+        res=conf.stalled[i].next_check;
+      }
+    }
   }
-  return tim;
+
+  time(&tim);
+  return res-tim;
 }
 
