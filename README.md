@@ -63,3 +63,9 @@ Example **stalled** object:
 	"stalledTimeout": 7200 //maximum minutes for a download to finish before considered as stalled; 0 - disabled
 }
 ```
+## Switches
+
+```
+ -c, --conf=FILE     Load specified configuration file
+ -d, --dry-run       Run in DRY-RUN mode. No real actions are made.
+```
