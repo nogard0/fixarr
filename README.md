@@ -56,9 +56,8 @@ Example **hosts** object:
 Example **stalled** object:
 ```javascript
 {
-	"hostIDs": [ 0, 1 ], //hosts to be used by ID as entered in hosts array
+	"hosts": [ "RADARR", "rad2" ], //hosts to be used by name as entered in hosts array
 	"enabled": true, //enabled or not, default true
-	"minRefreshTime": 5, //maximum minutes betwean every check for new stalled downloads; minimum 1 min
 	"zeroStartTimeout": 15, //maximum minutes for a download to get at least 1 byte before considered as stalled; 0 - disabled
 	"stalledTimeout": 7200 //maximum minutes for a download to finish before considered as stalled; 0 - disabled
 }
