@@ -15,16 +15,6 @@
                 "miDebuggerPath": "gdb",
                 "program": "${workspaceFolder}/fixarr"
             },
-            "osx": {
-                "MIMode": "lldb",
-                "miDebuggerPath": "lldb-mi",
-                "program": "${workspaceFolder}/fixarr"
-            },
-            "windows": {
-                "MIMode": "gdb",
-                "miDebuggerPath": "gdb.exe",
-                "program": "${workspaceFolder}/fixarr.exe"
-            },
             "preLaunchTask": "build"
         }
     ]

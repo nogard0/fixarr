@@ -16,6 +16,8 @@ struct _host {
   char         * APIKEY;
   char         * name;
   const struct _arr  * arr;
+  int            dead;
+  time_t         next_check; 
 };
 
 struct _stalled {
@@ -23,7 +25,7 @@ struct _stalled {
   struct _host * host;
   unsigned int   zeroStartTimeout;
   unsigned int   stalledTimeout;
-  time_t         next_check;
+  time_t         next_check;  
 };
 
 struct _conf {

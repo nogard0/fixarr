@@ -85,6 +85,7 @@ int load_conf(char *fn, int silent)
     if (!str)
       go_out("Unspecified apikey");
     hosts[i].APIKEY=strdup(str);
+    hosts[i].dead = -1;
   }
 
   jarr=json_object_get(json,"stalled");
@@ -112,6 +113,7 @@ int load_conf(char *fn, int silent)
       }
       if (!stalled[n].host)
         go_out("Invalid host specified - %s",host);
+      stalled[n].host->dead = -2;
       stalled[n].enabled = !json_is_false(json_object_get(j,"enabled"));
       stalled[n].zeroStartTimeout = json_integer_value_def(j,"zeroStartTimeout",15)*60;
       stalled[n].stalledTimeout = json_integer_value_def(j,"stalledTimeout",7200)*60;
