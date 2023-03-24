@@ -4,14 +4,7 @@
 #include "types.h"
 #include "conf.h"
 #include "funcs.h"
-
-#define log_err(x,p...) fprintf(stderr,"ERROR (%s): " x "\n", stalled->host->name, ## p);
-
-char _cc[1024];
-
-#if ! ULFIUS_CHECK_VERSION(2,7,2)
-#define cc(s,p...) ({ snprintf(_cc,1024,s,## p); _cc; })
-#endif
+#include "alive.h"
 
 void startSearch(struct _stalled *stalled, int mID)
 {
@@ -23,7 +16,7 @@ void startSearch(struct _stalled *stalled, int mID)
   json_t * json_body, *j;
 
   if (!mID) {
-    log_err("Invalid ID: 0");
+    log_stalled_err("Invalid ID: 0");
     return;
   }
 
@@ -50,7 +43,8 @@ void startSearch(struct _stalled *stalled, int mID)
   ulfius_init_response(&response);
   res = ulfius_send_http_request(&req, &response);
   if (res != U_OK) {
-    log_err("Error in http request: %d", res);
+    set_host_dead(stalled->host);
+    stalled->next_check=0;
     print_response(&response);
     goto out;
   }
@@ -62,9 +56,9 @@ void startSearch(struct _stalled *stalled, int mID)
 
   json_res = ulfius_get_json_body_response(&response,&err);
   if (!json_res) {
-    log_err("Error in JSON parsing: %s", err.text);
+    log_stalled_err("Error in JSON parsing: %s", err.text);
   } else {
-    log_err("%s", json_string_value(json_object_get(json_res,"message")));
+    log_stalled_err("%s", json_string_value(json_object_get(json_res,"message")));
     json_decref(json_res);
   }
   
@@ -83,7 +77,7 @@ int delete(struct _stalled *stalled, int mID)
   json_error_t err;
 
   if (!mID) {
-    log_err("Invalid ID: 0");
+    log_stalled_err("Invalid ID: 0");
     return -1;
   }
 
@@ -111,7 +105,8 @@ int delete(struct _stalled *stalled, int mID)
   ulfius_init_response(&response);
   res = ulfius_send_http_request(&req, &response);
   if (res != U_OK) {
-    log_err("Error in http request: %d", res);
+    set_host_dead(stalled->host);
+    stalled->next_check=0;
     print_response(&response);
     goto out;
   }
@@ -123,9 +118,9 @@ int delete(struct _stalled *stalled, int mID)
 
   json_res = ulfius_get_json_body_response(&response,&err);
   if (!json_res) {
-    log_err("Error in JSON parsing: %s", err.text);
+    log_stalled_err("Error in JSON parsing: %s", err.text);
   } else {
-    log_err("%s", json_string_value(json_object_get(json_res,"message")));
+    log_stalled_err("%s", json_string_value(json_object_get(json_res,"message")));
     json_decref(json_res);
   }
   res=-2;
@@ -172,7 +167,8 @@ int get_time_and_title(struct _stalled *stalled, int mID, const char *downloadId
   ulfius_init_response(&response);
   res = ulfius_send_http_request(&req, &response);
   if (res != U_OK) {
-    log_err("Error in http request: %d", res);
+    set_host_dead(stalled->host);
+    stalled->next_check=0;
     print_response(&response);
     res=-3;
     goto out;
@@ -180,7 +176,7 @@ int get_time_and_title(struct _stalled *stalled, int mID, const char *downloadId
 
   json_res = ulfius_get_json_body_response(&response,&err);
   if (!json_res) {
-    log_err("Error in JSON parsing: %s", err.text);
+    log_stalled_err("Error in JSON parsing: %s", err.text);
     res=-1;
     goto out;
   }
@@ -189,7 +185,7 @@ int get_time_and_title(struct _stalled *stalled, int mID, const char *downloadId
     jr=json_object_get(json_res,"records");
 
     if (!jr || !json_array_size(jr)) {
-      log_err("Error in JSON parsing: no records");
+      log_stalled_err("Error in JSON parsing: no records");
       print_response(&response);
       res=-2;
       goto out2;
@@ -234,13 +230,7 @@ void find_stalled(struct _stalled *stalled)
   const char *downloadId;
 
   time (&now);
-  if (stalled->zeroStartTimeout && stalled->stalledTimeout) {
-    stalled->next_check=now+MIN(stalled->zeroStartTimeout,stalled->stalledTimeout);
-  } else if (stalled->zeroStartTimeout) {
-    stalled->next_check=now+stalled->zeroStartTimeout;
-  } else if (stalled->stalledTimeout) {
-    stalled->next_check=now+stalled->stalledTimeout;
-  }
+  stalled->next_check=now+MINnot0(stalled->zeroStartTimeout,stalled->stalledTimeout);
   
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
@@ -259,14 +249,15 @@ void find_stalled(struct _stalled *stalled)
   ulfius_init_response(&response);
   res = ulfius_send_http_request(&req, &response);
   if (res != U_OK) {
-    log_err("Error in http request: %d", res);
+    set_host_dead(stalled->host);
+    stalled->next_check=0;
     print_response(&response);
     goto out;
   }
 
   json_res = ulfius_get_json_body_response(&response,&err);
   if (!json_res) {
-    log_err("Error in JSON parsing: %s", err.text);
+    log_stalled_err("Error in JSON parsing: %s", err.text);
     goto out;
   }
   jarr=json_object_get(json_res,"records");
@@ -299,8 +290,7 @@ void find_stalled(struct _stalled *stalled)
       continue;
     }
     
-    printf("%s stalled: (%s)[%.2lf%%]: %s - %s - %s ... ", 
-          stalled->host->name, 
+    log_stalled_info("Stalled: (%s)[%.2lf%%]: %s - %s - %s ... ",
           secs_to_hrtime(dif), 
           pro, 
           json_string_value(json_object_get(j,"indexer")),
@@ -332,15 +322,11 @@ time_t process_stalled()
 
   time(&tim);
   for (i=0; conf.stalled[i].host; i++) {
-    if (conf.stalled[i].enabled) {
+    if (conf.stalled[i].enabled && !conf.stalled[i].host->dead) {
       if  (conf.stalled[i].next_check<=tim) {
         find_stalled(&conf.stalled[i]);
       }
-      if (res) {
-        res=MIN(res,conf.stalled[i].next_check);
-      } else {
-        res=conf.stalled[i].next_check;
-      }
+      res=MINnot0(res,conf.stalled[i].next_check);
     }
   }
 

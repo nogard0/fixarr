@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "types.h"
 #include "conf.h"
 #include "stalled.h"
 #include "funcs.h"
+#include "alive.h"
 
 int main(int argc, char *const *argv)
 {
@@ -15,7 +17,7 @@ int main(int argc, char *const *argv)
   setvbuf(stdout,NULL,_IONBF,0);
   setvbuf(stderr,NULL,_IONBF,0);
 
-  printf("fixarr v1.01 stared!\n");
+  printf("fixarr v1.02 stared!\n");
 #ifdef DEBUG
   printf("DEBUG mode!\n");
 #endif
@@ -56,7 +58,10 @@ int main(int argc, char *const *argv)
   conf.dry_run=dry_run;
 
   while (1) {
-    sleep(MAX(30,process_stalled()));
+    time_t tim,mi;
+    mi=MINnot0(process_alive(),process_stalled());
+    time(&tim);
+    sleep(MAX(30,mi-tim));
   }  
 
   return 0;
