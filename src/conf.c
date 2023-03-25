@@ -113,25 +113,23 @@ int load_conf(char *fn, int silent)
       }
       if (!stalled[n].host)
         go_out("Invalid host specified - %s",host);
-      stalled[n].host->dead = -2;
       stalled[n].enabled = !json_is_false(json_object_get(j,"enabled"));
       stalled[n].zeroStartTimeout = json_integer_value_def(j,"zeroStartTimeout",15)*60;
       stalled[n].stalledTimeout = json_integer_value_def(j,"stalledTimeout",7200)*60;
-      if (!stalled[n].zeroStartTimeout && !stalled[n].stalledTimeout)
+      if (!stalled[n].zeroStartTimeout && !stalled[n].stalledTimeout) {
         stalled[n].enabled = 0;
+      }
+      if (stalled[n].enabled) {
+        stalled[n].host->dead = -2;
+        stalled[n].host->used_count++;
+        conf.hosts_served++;
+      }
       n++;
     }
   }
 
-  for (i=0, l=0; stalled[i].host; i++) {
-    if (stalled[i].enabled) {
-      l++;
-      break;
-    }
-  }
-
-  if (!l) {
-    go_out("No valid enabled stalled watchers configured");
+  if (!conf.hosts_served) {
+    go_out("No valid enabled stalled watchers configured!");
   }
 
   conf.hosts=hosts;

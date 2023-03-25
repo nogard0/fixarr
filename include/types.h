@@ -17,6 +17,7 @@ struct _host {
   char         * name;
   const struct _arr  * arr;
   int            dead;
+  int            used_count;
   time_t         next_check; 
 };
 
@@ -32,6 +33,7 @@ struct _conf {
   struct _host    * hosts;
   struct _stalled * stalled;
   int               dry_run;
+  int               hosts_served;
 };
 
 #endif /* TYPES_H */

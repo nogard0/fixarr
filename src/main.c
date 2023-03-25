@@ -53,11 +53,11 @@ int main(int argc, char *const *argv)
         }
   }
 
-  if (!conf.hosts)
+  if (!conf.hosts_served)
     exit(-1);
   conf.dry_run=dry_run;
 
-  while (1) {
+  while (conf.hosts_served) {
     time_t tim,mi;
     mi=MINnot0(process_alive(),process_stalled());
     time(&tim);

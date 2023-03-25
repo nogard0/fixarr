@@ -51,6 +51,7 @@ void test_alive(struct _host *host)
     }
     log_host_err("Host disabled!");
     host->dead=-1;
+    conf.hosts_served-=host->used_count;
     print_response(&response);
     goto out;
   }
@@ -62,6 +63,7 @@ void test_alive(struct _host *host)
       log_host_err("Host returned invalid JSON response: %s", err.text);
       log_host_err("Host disabled!");
       host->dead=-1;
+      conf.hosts_served-=host->used_count;
       print_response(&response);
       goto out;
     }
