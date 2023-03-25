@@ -17,7 +17,7 @@ int main(int argc, char *const *argv)
   setvbuf(stdout,NULL,_IONBF,0);
   setvbuf(stderr,NULL,_IONBF,0);
 
-  printf("fixarr v1.02 stared!\n");
+  printf("fixarr v" FIXARR_VERSION " stared!\n");
 #ifdef DEBUG
   printf("DEBUG mode!\n");
 #endif

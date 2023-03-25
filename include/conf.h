@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#define FIXARR_VERSION "1.1.0"
+
 extern struct _conf conf;
 
 int load_conf(char *fn, int silent);
