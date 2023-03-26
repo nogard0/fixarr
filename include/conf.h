@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-#define FIXARR_VERSION "1.1.0"
+#define FIXARR_VERSION "1.1.1"
 
 extern struct _conf conf;
 
