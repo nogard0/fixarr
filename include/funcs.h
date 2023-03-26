@@ -27,7 +27,7 @@ char *secs_to_hrtime(time_t sec);
 #endif
 
 #if ! ULFIUS_CHECK_VERSION(2,7,2)
-char _cc[1024];
+extern char _cc[1024];
 
 #define cc(s,p...) ({ snprintf(_cc,1024,s,## p); _cc; })
 #endif

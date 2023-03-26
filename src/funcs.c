@@ -3,6 +3,9 @@
 #include <jansson.h>
 #include <ulfius.h>
 
+#if ! ULFIUS_CHECK_VERSION(2,7,2)
+char _cc[1024];
+#endif
 char hr_secs[20];
 
 #ifdef DEBUG
