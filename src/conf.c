@@ -114,9 +114,9 @@ int load_conf(char *fn, int silent)
       if (!stalled[n].host)
         go_out("Invalid host specified - %s",host);
       stalled[n].enabled = !json_is_false(json_object_get(j,"enabled"));
-      stalled[n].zeroStartTimeout = json_integer_value_def(j,"zeroStartTimeout",15)*60;
-      stalled[n].stalledTimeout = json_integer_value_def(j,"stalledTimeout",7200)*60;
-      if (!stalled[n].zeroStartTimeout && !stalled[n].stalledTimeout) {
+      stalled[n].StartTimeout = json_integer_value_def(j,"StartTimeout",15)*60;
+      stalled[n].FinishTimeout = json_integer_value_def(j,"FinishTimeout",7200)*60;
+      if (!stalled[n].StartTimeout && !stalled[n].FinishTimeout) {
         stalled[n].enabled = 0;
       }
       if (stalled[n].enabled) {

@@ -230,7 +230,7 @@ void find_stalled(struct _stalled *stalled)
   const char *downloadId;
 
   time (&now);
-  stalled->next_check=now+MINnot0(stalled->zeroStartTimeout,stalled->stalledTimeout);
+  stalled->next_check=now+MINnot0(stalled->StartTimeout,stalled->FinishTimeout);
   
   ulfius_init_request(&req);
   ulfius_set_request_properties(&req,
@@ -275,15 +275,15 @@ void find_stalled(struct _stalled *stalled)
     if (res<0) {
       continue;
     }
-    if (! ((stalled->zeroStartTimeout && (so==sl) && (so!=0) && (dif>stalled->zeroStartTimeout))
-        || (stalled->stalledTimeout && (dif>stalled->stalledTimeout))) ) {
+    if (! ((stalled->StartTimeout && (so==sl) && (so!=0) && (dif>stalled->StartTimeout))
+        || (stalled->FinishTimeout && (dif>stalled->FinishTimeout))) ) {
       
       time (&now);
-      if (stalled->zeroStartTimeout && (so==sl) && (so!=0)) {
-        stalled->next_check=MIN(stalled->next_check,now+stalled->zeroStartTimeout-dif);
+      if (stalled->StartTimeout && (so==sl) && (so!=0)) {
+        stalled->next_check=MIN(stalled->next_check,now+stalled->StartTimeout-dif);
       }
-      if (stalled->stalledTimeout) {
-        stalled->next_check=MIN(stalled->next_check,now+stalled->stalledTimeout-dif);
+      if (stalled->FinishTimeout) {
+        stalled->next_check=MIN(stalled->next_check,now+stalled->FinishTimeout-dif);
       }
       if (sourceTitle)
         free(sourceTitle);

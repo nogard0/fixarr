@@ -24,8 +24,8 @@ struct _host {
 struct _stalled {
   int            enabled;
   struct _host * host;
-  unsigned int   zeroStartTimeout;
-  unsigned int   stalledTimeout;
+  unsigned int   StartTimeout;
+  unsigned int   FinishTimeout;
   time_t         next_check;  
 };
 

@@ -58,8 +58,8 @@ Example **stalled** object:
 {
 	"hosts": [ "RADARR", "rad2" ], //hosts to be used by name as entered in hosts array
 	"enabled": true, //enabled or not, default true
-	"zeroStartTimeout": 15, //maximum minutes for a download to get at least 1 byte before considered as stalled; 0 - disabled
-	"stalledTimeout": 7200 //maximum minutes for a download to finish before considered as stalled; 0 - disabled
+	"StartTimeout": 15, //maximum minutes for a download to get at least 1 byte before considered as stalled; 0 - disabled
+	"FinishTimeout": 7200 //maximum minutes for a download to finish before considered as stalled; 0 - disabled
 }
 ```
 ## Switches

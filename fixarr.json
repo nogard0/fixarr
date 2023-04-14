@@ -17,8 +17,18 @@
         {
             "hosts": [ "RADARR", "SONson" ],
             "enabled": true,
-            "zeroStartTimeout": 15,
-            "stalledTimeout": 7200
+            "StartTimeout": 5,
+            "FinishTimeout": 15,
+            "profile_include": [ "FAST HD - 720p/1080p" ],
+            "profile_exclude": []
+        },
+        {
+            "hosts": [ "RADARR", "SONson" ],
+            "enabled": true,
+            "StartTimeout": 1440,
+            "FinishTimeout": 7200,
+            "profile_include": [],
+            "profile_exclude": []
         }
     ]
 }
