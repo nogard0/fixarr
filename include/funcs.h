@@ -6,7 +6,9 @@
 
 #define MIN(a,b) ({typeof(a) _a=a; typeof(b) _b=b; (_a)<(_b)?(_a):(_b);})
 #define MAX(a,b) ({typeof(a) _a=a; typeof(b) _b=b; (_a)>(_b)?(_a):(_b);})
-#define MINnot0(a,b) ({typeof(a) _a=a; typeof(b) _b=b; _a?_b?_a<_b?_a:_b:_a:0;})
+#define MINnot0(a,b) ({typeof(a) _a=a; typeof(b) _b=b; _a?_b?_a<_b?_a:_b:_a:_b;})
+
+#define strdup_na(str) ({const char * c=str; char * res; if(c) res=strdup(c); else res=strdup("N/A"); res;})
 
 char * print_map(const struct _u_map * map);
 void print_response(struct _u_response * response);
@@ -15,6 +17,7 @@ char *secs_to_hrtime(time_t sec);
 
 #define log_stalled_err(x,p...) fprintf(stderr,"ERROR (%s): " x "\n", stalled->host->name, ## p);
 #define log_stalled_info(x,p...) fprintf(stdout,"INFO (%s): " x "\n", stalled->host->name, ## p);
+#define log_stalled_info_n(x,p...) fprintf(stdout,"INFO (%s): " x, stalled->host->name, ## p);
 #define log_host_err(x,p...) fprintf(stderr,"ERROR (%s)[%s]: " x "\n", host->name, host->URL, ## p);
 #define log_host_info(x,p...) fprintf(stdout,"INFO (%s): " x "\n", host->name, ## p);
 

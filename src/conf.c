@@ -7,9 +7,32 @@
 #include "types.h"
 
 struct _conf conf;
+int debug=0;
 
-const struct _arr arrs[]={{"RADARR","movieId","MoviesSearch","movieIds","/movie"},
-                          {"SONARR","episodeId","EpisodeSearch","episodeIds",""}};
+const struct _arr arrs[] = { { .defname = "RADARR",
+                               .target_keyname = "movie",
+                               .id_keyname = "movieId",
+                               .search_single_auto = 0,
+                               .search_command_name = "MoviesSearch",
+                               .search_keyname = "movieIds",
+                               .history_include_target_keyname = "includeMovie",
+                               .bulk_history_include_target_keyname = NULL,
+                               .bulk_target_keyname = NULL,
+                               .bulk_id1_keyname = NULL,
+                               .bulk_id2_keyname = NULL,
+                               .bulk_search_command_name=NULL },
+                             { .defname = "SONARR",
+                               .target_keyname = "episode",
+                               .id_keyname = "episodeId",
+                               .search_single_auto = 1,
+                               .search_command_name = "EpisodeSearch",
+                               .search_keyname = "episodeIds",
+                               .history_include_target_keyname = "includeEpisode",
+                               .bulk_history_include_target_keyname = "includeSeries",
+                               .bulk_target_keyname = "series",
+                               .bulk_id1_keyname = "seriesId",
+                               .bulk_id2_keyname = "seasonNumber",
+                               .bulk_search_command_name = "SeasonSearch" } };
 
 #define json_integer_value_def(j,n,def) ({ int _r; json_t *_j=json_object_get(j,n); if (json_is_integer(_j)) _r=json_integer_value(_j); else _r=def; _r; })
 
