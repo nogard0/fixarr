@@ -17,25 +17,27 @@ int main(int argc, char *const *argv)
   setvbuf(stdout,NULL,_IONBF,0);
   setvbuf(stderr,NULL,_IONBF,0);
 
-  printf("fixarr v" FIXARR_VERSION " stared!\n");
-#ifdef DEBUG
-  printf("DEBUG mode!\n");
-#endif
+  printf("fixarr v" FIXARR_VERSION " started!\n");
 
   struct option long_options[] =
     { { "conf", required_argument, 0, 'c' },
-      { "dry-run", required_argument, 0, 'd' },
+      { "dry-run", no_argument, 0, 'n' },
+      { "debug", no_argument, 0, 'd' },
       { 0, 0, 0, 0 }, };
-  while ((opt = getopt_long(argc, argv, "c:d", long_options, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, "c:nd", long_options, NULL)) != -1) {
     switch (opt)
     {
     case 'c':
       if (load_conf(optarg,0))
         exit(-1);
       break;
-    case 'd':
+    case 'n':
       dry_run=1;
       printf("DRY-RUN mode!\n");
+      break;
+    case 'd':
+      debug=1;
+      printf("DEBUG mode!\n");
       break;
     default:
       exit(-1);

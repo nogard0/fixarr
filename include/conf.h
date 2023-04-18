@@ -6,6 +6,7 @@
 #define FIXARR_VERSION "1.1.1"
 
 extern struct _conf conf;
+extern int debug;
 
 int load_conf(char *fn, int silent);
 

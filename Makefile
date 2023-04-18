@@ -9,8 +9,8 @@ CC = gcc
 # define any compile-time flags
 CFLAGS	:= -Wall -Wextra -g -std=gnu99 -D_XOPEN_SOURCE -D_DEFAULT_SOURCE
 
-ifdef DEBUG
-CFLAGS += -DDEBUG
+ifdef NO_DEBUG
+CFLAGS += -DNO_DEBUG
 endif
 
 

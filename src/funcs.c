@@ -4,13 +4,14 @@
 #include <ulfius.h>
 
 #include "funcs.h"
+#include "conf.h"
 
 #if ! ULFIUS_CHECK_VERSION(2,7,2)
 char _cc[1024];
 #endif
 char hr_secs[20];
 
-#ifdef DEBUG
+#ifndef NO_DEBUG
 char * print_map(const struct _u_map * map) {
   char * line, * to_return = NULL;
   const char **keys, * value;
@@ -44,9 +45,12 @@ char * print_map(const struct _u_map * map) {
 #endif
 
 void print_response(struct _u_response * response) {
-#ifndef DEBUG
+#ifdef NO_DEBUG
   (void)(response);
 #else
+  if (!debug) {
+    return;
+  }
   if (response != NULL) {
     char * headers = print_map(response->map_header);
     char response_body[response->binary_body_length + 1];
